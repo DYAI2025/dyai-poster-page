@@ -56,3 +56,34 @@ Every movement carries an `<aside>` with the counter-argument: 13px, italic, ink
 - `imprint.html`: legal name, address, contact, VAT/register.
 - Closing panel: "Who writes this" points at `ben.poersch.online`; confirm or replace.
 - No Open Graph image is referenced — add one only if a flat, palette-true image exists.
+
+## Deploying to Cloudflare
+
+The page must be deployed as plain static files. `DYAI.dc.html` is the *source*; the deployable page is `public/index.html`, a single self-contained file (all styles, SVG and the small runtime inlined, zero external requests).
+
+`public/` is the deploy root:
+
+```
+public/index.html      the page
+public/imprint.html
+public/feed.xml
+public/sitemap.xml
+public/robots.txt
+```
+
+**Workers (`npx wrangler deploy`)** — `wrangler.toml` declares the asset directory:
+
+```toml
+name = "dyai"
+compatibility_date = "2026-08-19"
+
+[assets]
+directory = "./public"
+not_found_handling = "404-page"
+```
+
+The build error `Could not detect a directory containing static files` means wrangler found no such directory: either `wrangler.toml` was missing, or `public/` was not committed. Commit both.
+
+**Cloudflare Pages** — build command: leave empty. Build output directory: `public`. No framework preset, no dependencies.
+
+After editing `DYAI.dc.html`, regenerate `public/index.html` (re-bundle) before deploying — editing the compiled file directly is not maintained.

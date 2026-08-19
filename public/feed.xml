@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <title>DYAI — Design Your Augmented Intelligence</title>
+  <subtitle>Five movements on what is actually happening.</subtitle>
+  <link href="https://project.dyai.cloud/" />
+  <link rel="self" type="application/atom+xml" href="https://project.dyai.cloud/feed.xml" />
+  <id>https://project.dyai.cloud/</id>
+  <updated>2026-08-20T00:00:00Z</updated>
+  <author><name>Benjamin Poersch</name></author>
+  <entry>
+    <title>We called it artificial because we did not know where to put it</title>
+    <link href="https://project.dyai.cloud/#i" />
+    <id>https://project.dyai.cloud/#i</id>
+    <updated>2026-08-20T00:00:00Z</updated>
+    <summary>Nothing about it is artificial. And nothing about it is only intelligence.</summary>
+  </entry>
+  <entry>
+    <title>You were never the only intelligence in the room</title>
+    <link href="https://project.dyai.cloud/#ii" />
+    <id>https://project.dyai.cloud/#ii</id>
+    <updated>2026-08-20T00:00:00Z</updated>
+    <summary>You have always been a participant in intelligence you did not own.</summary>
+  </entry>
+  <entry>
+    <title>Two comfortable answers</title>
+    <link href="https://project.dyai.cloud/#iii" />
+    <id>https://project.dyai.cloud/#iii</id>
+    <updated>2026-08-20T00:00:00Z</updated>
+    <summary>“It will pass.” — “It will solve everything.” Both are ways of not looking.</summary>
+  </entry>
+  <entry>
+    <title>Everyone wants the capability</title>
+    <link href="https://project.dyai.cloud/#iv" />
+    <id>https://project.dyai.cloud/#iv</id>
+    <updated>2026-08-20T00:00:00Z</updated>
+    <summary>Almost nobody wants to pay the price. The price is letting go.</summary>
+  </entry>
+  <entry>
+    <title>Going on was always the plan</title>
+    <link href="https://project.dyai.cloud/#v" />
+    <id>https://project.dyai.cloud/#v</id>
+    <updated>2026-08-20T00:00:00Z</updated>
+    <summary>Humanity never meant that things stay as they are.</summary>
+  </entry>
+</feed>

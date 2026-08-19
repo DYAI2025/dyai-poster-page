@@ -1,0 +1,7 @@
+name = "dyai"
+compatibility_date = "2026-08-19"
+
+# Static-only Worker: no server code, just the files in ./public
+[assets]
+directory = "./public"
+not_found_handling = "404-page"
