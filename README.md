@@ -119,8 +119,15 @@ wrangler found no such directory: either `wrangler.toml` was missing, or
 Workers Assets serves extensionless URLs by default, so `/imprint.html`
 answers `307 → /imprint`. The sitemap lists the extensionless form.
 
-**Cloudflare Pages** — build command: `npm install && npm run build`. Build
-output directory: `public`. No framework preset.
+**Cloudflare Pages** — build command: leave empty. Build output directory:
+`public`. No framework preset, no dependencies.
+
+The build command stays empty on both Workers Builds and Pages, and nothing in
+`package.json` runs on Cloudflare. `public/index.html` is generated locally and
+committed, because generating it needs headless Chromium — roughly 150 MB that
+a deploy container should not be downloading, and a failure mode that would
+take the site down rather than just the render. The build runs where it can be
+watched; the deploy only copies files.
 
 After editing `DYAI.dc.html`, recompile the bundle, then run `npm run build`
 and `npm test` before deploying. Editing `public/index.html` directly is not
