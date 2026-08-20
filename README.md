@@ -56,7 +56,9 @@ Every movement carries an `<aside>` with the counter-argument: 13px, italic, ink
 ## Remaining placeholders
 
 - `imprint.html`: legal name, address, contact, VAT/register.
-- Closing panel: "Who writes this" points at `ben.poersch.online`; confirm or replace.
+- Closing panel: "Who writes this" points at `poersch.dyai.cloud`. It used to point at
+  `ben.poersch.online`, which serves no valid certificate — its DNS still carries a stale
+  Railway CNAME and a Hostinger parking IP, so the link failed to connect at all.
 - No Open Graph image is referenced — add one only if a flat, palette-true image exists.
 
 ## Deploying to Cloudflare

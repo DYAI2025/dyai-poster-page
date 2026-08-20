@@ -154,7 +154,40 @@ async function inspect({ js = true, dropDecompressionStream = false, path = '/' 
     on.text === off.text ? 'identical' : `${on.textLength} vs ${off.textLength} chars`);
 }
 
-// ── 5. The other deployed routes ─────────────────────────────────────────────
+// ── 5. Links ─────────────────────────────────────────────────────────────────
+// The footer's "Who writes this" is the link a reader follows to find out who
+// wrote the page. It pointed at ben.poersch.online, which serves no valid
+// certificate — a dead link in the one place that has to work.
+{
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const page = await ctx.newPage();
+  await page.goto(ORIGIN + '/', { waitUntil: 'load' });
+  const links = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('a[href]')).map((a) => ({
+      href: a.getAttribute('href'),
+      text: a.textContent.trim(),
+    })),
+  );
+  await ctx.close();
+
+  const s = 'links';
+  const dead = links.filter((l) => /ben\.poersch\.online/.test(l.href));
+  check(s, 'no link to ben.poersch.online (no valid certificate)', dead.length === 0,
+    dead.map((l) => l.href).join(', '));
+
+  const who = links.find((l) => /who writes this/i.test(l.text));
+  check(s, '"Who writes this" points at poersch.dyai.cloud',
+    !!who && /^https:\/\/poersch\.dyai\.cloud/.test(who.href), who ? who.href : 'link not found');
+
+  // Every internal href must resolve to something public/ actually serves.
+  const internal = links.filter((l) => !/^(https?:|mailto:|#)/.test(l.href));
+  for (const l of internal) {
+    const res = await fetch(new URL(l.href, ORIGIN + '/').toString(), { redirect: 'follow' });
+    check(s, `internal link ${l.href} resolves`, res.ok, `HTTP ${res.status}`);
+  }
+}
+
+// ── 6. The other deployed routes ─────────────────────────────────────────────
 if (!single) {
   const r = await inspect({ js: false, path: '/imprint.html' });
   check('imprint', 'renders without JavaScript', r.textLength > 100, `${r.textLength} chars`);
