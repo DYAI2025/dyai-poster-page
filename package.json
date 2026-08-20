@@ -1,0 +1,13 @@
+{
+  "name": "dyai-poster-page",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node test/critical-test.mjs",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}

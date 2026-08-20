@@ -1,13 +1,15 @@
 # DYAI — project.dyai.cloud
 
-One static page, one argument, five movements. No build step: open the page file directly.
+One static page, one argument, five movements. The deployed page is plain static HTML — generated once by `npm run build`, readable with JavaScript off.
 
 ## Files
 
-- `DYAI.dc.html` — the whole page (opening panel, movements I–V, closing panel). This is the deliverable page; deploy it as `index.html`. Styling lives inline in the markup rather than in a separate `style.css`, because this project authors pages as single self-contained streaming documents — the palette and type rules below are the contract instead of a stylesheet.
+- `DYAI.dc.html` — the whole page (opening panel, movements I–V, closing panel). This is the authored source. Styling lives inline in the markup rather than in a separate `style.css`, because this project authors pages as single self-contained streaming documents — the palette and type rules below are the contract instead of a stylesheet.
+- `src/index.bundle.html` — `DYAI.dc.html` compiled to a self-contained canvas bundle. Build input only; never deployed (see *Deploying to Cloudflare*).
+- `public/index.html` — the deployed page: plain static HTML, generated from the bundle by `npm run build`. Do not edit by hand.
 - `imprint.html` — plain skeleton, placeholders marked `[PLACEHOLDER: …]`.
 - `feed.xml` — Atom, five entries (one per movement).
-- `sitemap.xml`, `robots.txt`.
+- `sitemap.xml`, `robots.txt`, `404.html`.
 
 Anchors: `#i`, `#ii`, `#iii`, `#iv`, `#v`. JavaScript marks the current tick on the right-hand rail; with JS off the page is fully readable and the rail links still work.
 
@@ -48,27 +50,57 @@ Every movement carries an `<aside>` with the counter-argument: 13px, italic, ink
 3. Compose: one grain field, one vermilion plane, one or two hairline annotations, one dot grid, one dot, one numeral. If two of the six now use the same arrangement, change the new one.
 4. Give it exactly one claim (`<h2>`), one prose column, one `<aside>` second voice.
 5. The rail grows by itself — it is generated from the `[data-mv]` sections; extend the `roman`/`digits` arrays in the logic class and add `n6`.
-6. Add a sixth `<entry>` to `feed.xml`.
+6. Add a sixth `<entry>` to `feed.xml`, then recompile the bundle and run `npm run build && npm test`.
 7. Keep the paper-deep background (`#F1EFE9`) on at most two of the six.
 
 ## Remaining placeholders
 
 - `imprint.html`: legal name, address, contact, VAT/register.
-- Closing panel: "Who writes this" points at `ben.poersch.online`; confirm or replace.
+- Closing panel: "Who writes this" points at `poersch.dyai.cloud`. It used to point at
+  `ben.poersch.online`, which serves no valid certificate — its DNS still carries a stale
+  Railway CNAME and a Hostinger parking IP, so the link failed to connect at all.
 - No Open Graph image is referenced — add one only if a flat, palette-true image exists.
 
 ## Deploying to Cloudflare
 
-The page must be deployed as plain static files. `DYAI.dc.html` is the *source*; the deployable page is `public/index.html`, a single self-contained file (all styles, SVG and the small runtime inlined, zero external requests).
+The page must be deployed as plain static files — meaning the bytes Cloudflare
+serves for `/` **are** the page, not a program that produces it.
+
+`src/index.bundle.html` is not that. It is the canvas bundle: a JavaScript
+program that base64/gzip-unpacks React and the canvas runtime into blob URLs
+and then builds the document at runtime. Its markup contains no page at all.
+Anything that does not execute that program in full receives an empty screen —
+scripting disabled, a browser without `DecompressionStream` (Safari below 16.4,
+Firefox below 113), a strict content-security policy, and every link-preview
+and search crawler. It was deployed as `public/index.html` once; the build was
+green and the site returned HTTP 200 the whole time, because the failure is in
+the response body, not in the deploy.
+
+So the deploy artifact is generated:
+
+```
+npm install          # playwright, for the headless render
+npm run build        # src/index.bundle.html  →  public/index.html
+npm test             # asserts the page survives without JavaScript
+```
+
+`tools/build.mjs` runs the bundle once in headless Chromium, takes the composed
+DOM, strips the runtime (all scripts, the canvas stylesheets and bookkeeping
+attributes, the `#dc-root` mount point) and reattaches the rail's
+active-movement highlight as ~20 lines of plain JS. The output renders
+identically — pixel for pixel — with and without JavaScript, and requests
+nothing but itself. It fails the build rather than emit a page with runtime
+leftovers in it.
 
 `public/` is the deploy root:
 
 ```
-public/index.html      the page
+public/index.html      the page (generated — do not edit)
 public/imprint.html
 public/feed.xml
 public/sitemap.xml
 public/robots.txt
+public/404.html
 ```
 
 **Workers (`npx wrangler deploy`)** — `wrangler.toml` declares the asset directory:
@@ -82,8 +114,43 @@ directory = "./public"
 not_found_handling = "404-page"
 ```
 
-The build error `Could not detect a directory containing static files` means wrangler found no such directory: either `wrangler.toml` was missing, or `public/` was not committed. Commit both.
+The build error `Could not detect a directory containing static files` means
+wrangler found no such directory: either `wrangler.toml` was missing, or
+`public/` was not committed. Commit both.
 
-**Cloudflare Pages** — build command: leave empty. Build output directory: `public`. No framework preset, no dependencies.
+Workers Assets serves extensionless URLs by default, so `/imprint.html`
+answers `307 → /imprint`. The sitemap lists the extensionless form.
 
-After editing `DYAI.dc.html`, regenerate `public/index.html` (re-bundle) before deploying — editing the compiled file directly is not maintained.
+**Cloudflare Pages** — build command: leave empty. Build output directory:
+`public`. No framework preset, no dependencies.
+
+The build command stays empty on both Workers Builds and Pages, and nothing in
+`package.json` runs on Cloudflare. `public/index.html` is generated locally and
+committed, because generating it needs headless Chromium — roughly 150 MB that
+a deploy container should not be downloading, and a failure mode that would
+take the site down rather than just the render. The build runs where it can be
+watched; the deploy only copies files.
+
+After editing `DYAI.dc.html`, recompile the bundle, then run `npm run build`
+and `npm test` before deploying. Editing `public/index.html` directly is not
+maintained — the next build overwrites it.
+
+## The critical test
+
+`npm test` serves `public/` the way Workers Assets does and asserts, under
+each condition that broke the previous build:
+
+- **scripting disabled** — all five movements, claims, anchors, asides and
+  compositions render; the title, canonical URL, `og:title` and description are
+  present for link previews and crawlers;
+- **scripting enabled** — no page errors, and no request beyond the document;
+- **no `DecompressionStream`** — no unresolved `{{ }}` interpolations and no
+  mangled SVG attributes;
+- **parity** — the text is byte-identical with and without JavaScript;
+- the imprint, feed, sitemap, robots and 404 routes are served and well-formed.
+
+Run it against the old bundle to see what it catches:
+
+```
+node test/critical-test.mjs src/index.bundle.html
+```
